@@ -191,6 +191,7 @@ Special thanks to all contributors who make this project better every day! 🌟
 
 - [@cristoferms](https://github.com/cristoferms)
 - [@JuniorBecari10](https://github.com/JuniorBecari10)
+- [@oShatra](https://github.com/oShatra)
 
 ## 🌟 **Created by**
 
