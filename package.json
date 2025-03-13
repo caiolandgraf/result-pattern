@@ -2,8 +2,17 @@
   "name": "@eicode/result-pattern",
   "version": "1.1.0",
   "description": "A safe and elegant pattern for handling errors in TypeScript",
+  "license": "MIT",
+  "author": "Caio Landgraf",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/caiolandgraf/result-pattern.git"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "keywords": [
     "result",
     "pattern",
@@ -13,12 +22,16 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean"
   },
-  "author": "Caio Landgraf",
-  "license": "ISC",
   "devDependencies": {
     "@types/node": "^22.13.10",
+    "rimraf": "^5.0.1",
     "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
