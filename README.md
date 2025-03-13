@@ -2,7 +2,7 @@
 
 ## 💻 **Ready to See It in Action?**
 
-If you'd like to see a practical example of the Result Pattern implemented in a React with Next.js project (pure code without using this library), check out the [GitHub repository](https://github.com/caiolandgraf/result-pattern). This example showcases how this pattern can streamline error handling in real-world applications!
+If you'd like to see a practical example of the Result Pattern implemented in a React with Next.js project (pure code without using this library), check out the [GitHub repository](https://github.com/caiolandgraf/result-pattern-react). This example showcases how this pattern can streamline error handling in real-world applications!
 
 ## 📌 **Why use the Result Pattern?**
 
