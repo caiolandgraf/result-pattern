@@ -222,6 +222,7 @@ export class Fail<V = unknown, E = unknown> implements IResult<V, E> {
 	public andThen<NextV>(_: () => Result<NextV, E>): Result<NextV, E> {
 		return new Fail<NextV, E>(this.value);
 	}
+
 	// ✅ Returns another Result if this is a Fail
 	public or(result: Result<V, E>): Result<V, E> {
 		return result;
