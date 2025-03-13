@@ -190,6 +190,7 @@ If you value **clean, scalable, and maintainable code**, **the Result Pattern is
 Special thanks to all contributors who make this project better every day! 🌟
 
 - [@cristoferms](https://github.com/cristoferms)
+- [@JuniorBecari10](https://github.com/JuniorBecari10)
 
 ## 🌟 **Created by**
 
