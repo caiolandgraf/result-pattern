@@ -56,7 +56,7 @@ export function ExampleUsage() {
 		const [validEmail, validPassword] = combined.value;
 		console.log("Valid data:", validEmail.toString(), validPassword.toString());
 	} else {
-		console.log("Invalid data:", combined.value);
+		console.log("Invalid data:", combined.unwrapOrGetErrors());
 	}
 
 	// Example 7: Using mapFail to transform errors

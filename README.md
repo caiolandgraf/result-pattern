@@ -8,15 +8,15 @@ Managing errors in TypeScript can be tricky, but the **Result Pattern** provides
 
 Install the package with your favorite package manager:
 
-```bash
+```shellscript
 # npm
-npm install result-pattern
+npm install @eicode/result-pattern
 
 # yarn
-yarn add result-pattern
+yarn add @eicode/result-pattern
 
 # pnpm
-pnpm add result-pattern
+pnpm add @eicode/result-pattern
 ```
 
 ---
@@ -33,9 +33,9 @@ In TypeScript, tracking errors can be challenging because functions can throw er
 
 The **Result Pattern** solves this by ensuring that **all operations return a structured result**, making your code **safer and more predictable**:
 
-✅ **Easier error tracking**  
-✅ **Cleaner, more readable code (no more scattered `try/catch`)**  
-✅ **Error grouping for better user experience**  
+✅ **Easier error tracking**
+✅ **Cleaner, more readable code (no more scattered `try/catch`)**
+✅ **Error grouping for better user experience**
 ✅ **No more deep nesting (`if/else`, `try/catch` within `try/catch`)**
 
 ---
@@ -44,7 +44,7 @@ The **Result Pattern** solves this by ensuring that **all operations return a st
 
 The **Result Pattern** wraps a function's outcome in a **success (Ok)** or **failure (Fail)** result, ensuring that all returns follow a consistent structure.
 
-```ts
+```typescript
 const success = new Ok("All good!"); // Result<string>
 console.log(success.isOk); // true
 console.log(success.value); // "All good!"
@@ -64,7 +64,7 @@ Let's compare traditional error handling with the **Result Pattern**.
 
 ### ❌ Traditional Approach (Unstructured Errors)
 
-```ts
+```typescript
 function getUser(id: number): User {
   if (id <= 0) throw new Error("Invalid ID!");
   return { id, name: "Caio" };
@@ -87,7 +87,7 @@ try {
 
 ### ✅ Using the Result Pattern (Predictable Errors)
 
-```ts
+```typescript
 function getUser(id: number): Result<User, string> {
   if (id <= 0) return new Fail("Invalid ID!");
   return new Ok({ id, name: "Caio" });
@@ -110,12 +110,12 @@ if (result.isFail) {
 
 Need to collect multiple errors before returning a response? The **Result Pattern** makes it easy! 🔥
 
-```ts
+```typescript
 const r1 = new Fail("Database error!");
 const r2 = new Fail("User authentication failed!");
 const r3 = new Ok(42);
 
-const combined = ResultUtils.combine([r1, r2, r3]);
+const combined = ResultUtils.combine(r1, r2, r3);
 
 console.log(combined.isFail); // true
 console.log(combined.value);
@@ -126,11 +126,34 @@ console.log(combined.value);
 
 ---
 
+## 🎁 **Easy Access to Error Values**
+
+The new `unwrapOrGetErrors()` method makes it even easier to work with results:
+
+```typescript
+// Validating form data
+const email = Email.try("invalid-email");
+const password = StrongPassword.try("weak");
+
+// Combining validations
+const combined = ResultUtils.combine(email, password);
+
+// Get either the valid data or the errors with one method call
+console.log(combined.unwrapOrGetErrors());
+// Output: ["Invalid email format", "Password too weak"]
+
+// No need for type assertions or default values when you just want the errors!
+```
+
+This method returns the success value if the result is `Ok`, or the error value if it's a `Fail`, making your code even cleaner.
+
+---
+
 ## ✨ **Eliminate Deep Nesting**
 
 ### ❌ Without Result Pattern (Nesting Nightmare)
 
-```ts
+```typescript
 try {
   const user = await getUser();
   try {
@@ -155,15 +178,15 @@ try {
 
 ### ✅ With Result Pattern: Simple, Clean, and Readable
 
-```ts
+```typescript
 const user = await Result.trySync(() => getUser());
-if (user.isFail) return console.error(user.value);
+if (user.isFail) return console.error(user.unwrapOrGetErrors());
 
 const orders = await Result.trySync(() => getOrders(user.value.id));
-if (orders.isFail) return console.error(orders.value);
+if (orders.isFail) return console.error(orders.unwrapOrGetErrors());
 
 const invoice = await Result.trySync(() => generateInvoice(orders.value));
-if (invoice.isFail) return console.error(invoice.value);
+if (invoice.isFail) return console.error(invoice.unwrapOrGetErrors());
 
 console.log(invoice.value);
 ```
@@ -172,14 +195,46 @@ console.log(invoice.value);
 
 ---
 
+## 🔄 **Complete API**
+
+The Result Pattern provides a comprehensive API for working with results:
+
+```typescript
+// Creating results
+const ok = new Ok(42);
+const fail = new Fail("Error message");
+
+// Transforming values
+const doubled = ok.map((x) => x * 2); // Ok(84)
+const uppercased = fail.mapFails((e) => e.toUpperCase()); // Fail("ERROR MESSAGE")
+
+// Chaining operations
+const validated = ok.flatMap((x) => (x > 0 ? new Ok(x) : new Fail("Negative")));
+
+// Extracting values
+const value = ok.unwrap(); // 42 (throws if Fail)
+const safeValue = fail.unwrapOr("default"); // "default"
+const computed = fail.unwrapOrElse(() => calculateDefault());
+
+// Combining results
+const combined = ok.and(anotherResult); // Returns anotherResult
+const alternative = fail.or(backupResult); // Returns backupResult
+
+// Getting values or errors
+const result = anyResult.unwrapOrGetErrors(); // Returns value if Ok, error if Fail
+```
+
+---
+
 ## 🎯 **Conclusion**
 
 The **Result Pattern** **should be standard practice** in TypeScript projects because:
 
-✅ **Simplifies error tracking**  
-✅ **Eliminates unnecessary nesting**  
-✅ **Allows structured error grouping**  
+✅ **Simplifies error tracking**
+✅ **Eliminates unnecessary nesting**
+✅ **Allows structured error grouping**
 ✅ **Makes code predictable and robust**
+✅ **Provides flexible error handling with `unwrapOrGetErrors()`**
 
 If you value **clean, scalable, and maintainable code**, **the Result Pattern is the way to go!** 🚀
 
