@@ -126,26 +126,44 @@ console.log(combined.value);
 
 ---
 
-## 🎁 **Easy Access to Error Values**
+## 🎮 **Powerful Pattern Matching**
 
-The new `unwrapOrGetErrors()` method makes it even easier to work with results:
+The `match` method provides an elegant way to handle both success and failure cases with a clean syntax:
 
 ```typescript
-// Validating form data
-const email = Email.try("invalid-email");
-const password = StrongPassword.try("weak");
+const result = getUser(userId);
 
-// Combining validations
-const combined = ResultUtils.combine(email, password);
+// Handle both cases with a single method call
+const greeting = result.match({
+  ok: (user) => `Hello, ${user.name}!`,
+  fail: (error) => `Error: ${error}`,
+});
 
-// Get either the valid data or the errors with one method call
-console.log(combined.unwrapOrGetErrors());
-// Output: ["Invalid email format", "Password too weak"]
-
-// No need for type assertions or default values when you just want the errors!
+console.log(greeting);
+// Either "Hello, Caio!" or "Error: Invalid ID!"
 ```
 
-This method returns the success value if the result is `Ok`, or the error value if it's a `Fail`, making your code even cleaner.
+This eliminates the need for conditional statements and makes your code more expressive.
+
+---
+
+## 🔄 **Flexible Value Access**
+
+The library provides multiple ways to access values:
+
+```typescript
+// Extract value safely
+const value = result.unwrapOr("Default value");
+
+// Extract with custom fallback function
+const computed = result.unwrapOrElse(() => calculateDefault());
+
+// Get value with custom error
+const critical = result.expect("Critical operation failed!");
+
+// Get either the value or the error
+const valueOrError = result.valueOrError();
+```
 
 ---
 
@@ -180,13 +198,13 @@ try {
 
 ```typescript
 const user = await Result.trySync(() => getUser());
-if (user.isFail) return console.error(user.unwrapOrGetErrors());
+if (user.isFail) return console.error(user.valueOrError());
 
 const orders = await Result.trySync(() => getOrders(user.value.id));
-if (orders.isFail) return console.error(orders.unwrapOrGetErrors());
+if (orders.isFail) return console.error(orders.valueOrError());
 
 const invoice = await Result.trySync(() => generateInvoice(orders.value));
-if (invoice.isFail) return console.error(invoice.unwrapOrGetErrors());
+if (invoice.isFail) return console.error(invoice.valueOrError());
 
 console.log(invoice.value);
 ```
@@ -220,8 +238,17 @@ const computed = fail.unwrapOrElse(() => calculateDefault());
 const combined = ok.and(anotherResult); // Returns anotherResult
 const alternative = fail.or(backupResult); // Returns backupResult
 
+// Pattern matching
+const result = anyResult.match({
+  ok: (v) => `Success: ${v}`,
+  fail: (e) => `Error: ${e}`,
+});
+
+// Flipping Ok/Fail states
+const flipped = ok.flip(); // Converts Ok to Fail and vice versa
+
 // Getting values or errors
-const result = anyResult.unwrapOrGetErrors(); // Returns value if Ok, error if Fail
+const result = anyResult.valueOrError(); // Returns value if Ok, error if Fail
 ```
 
 ---
@@ -234,7 +261,7 @@ The **Result Pattern** **should be standard practice** in TypeScript projects be
 ✅ **Eliminates unnecessary nesting**
 ✅ **Allows structured error grouping**
 ✅ **Makes code predictable and robust**
-✅ **Provides flexible error handling with `unwrapOrGetErrors()`**
+✅ **Provides flexible error handling with `valueOrError()` and pattern matching**
 
 If you value **clean, scalable, and maintainable code**, **the Result Pattern is the way to go!** 🚀
 
