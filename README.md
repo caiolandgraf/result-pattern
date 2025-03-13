@@ -1,8 +1,29 @@
 # 🚀 **Result Pattern - A safe and elegant pattern for handling errors in TypeScript**
 
-## 💻 **Ready to See It in Action?**
+---
+
+## 💻 **Installation**
+
+To use the Result Pattern in your project, you can install it via your preferred package manager:
+
+```bash
+# npm
+npm install result-pattern
+
+# yarn
+yarn add result-pattern
+
+# pnpm
+pnpm add result-pattern
+```
+
+---
+
+## 🔍 **Ready to See It in Action?**
 
 If you'd like to see a practical example of the Result Pattern implemented in a React with Next.js project (pure code without using this library), check out the [GitHub repository](https://github.com/caiolandgraf/result-pattern-react). This example showcases how this pattern can streamline error handling in real-world applications!
+
+---
 
 ## 📌 **Why use the Result Pattern?**
 
