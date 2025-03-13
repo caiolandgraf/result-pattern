@@ -75,6 +75,11 @@ interface IResult<V, E> {
 	 * This allows accessing the error values directly without type constraints.
 	 */
 	valueOrError(): V | E;
+
+	/**
+	 * Pattern matching for Result types. Provides a more elegant way to handle both cases.
+	 */
+	match<R>(patterns: { ok: (value: V) => R; fail: (error: E) => R }): R;
 }
 
 /**
@@ -152,6 +157,11 @@ export class Ok<V = unknown, E = unknown> implements IResult<V, E> {
 	public valueOrError(): V {
 		return this.value;
 	}
+
+	// ✅ Pattern matching for Result types
+	public match<R>(patterns: { ok: (value: V) => R; fail: (error: E) => R }): R {
+		return patterns.ok(this.value);
+	}
 }
 
 /**
@@ -225,6 +235,11 @@ export class Fail<V = unknown, E = unknown> implements IResult<V, E> {
 	// ✅ Returns the error value
 	public valueOrError(): E {
 		return this.value;
+	}
+
+	// ✅ Pattern matching for Result types
+	public match<R>(patterns: { ok: (value: V) => R; fail: (error: E) => R }): R {
+		return patterns.fail(this.value);
 	}
 }
 
