@@ -9,21 +9,24 @@ interface IResult<V, E> {
 
 	/**
 	 * Transforms the value if the result is Ok.
+     * It maps a `Result<V, E>` into `Result<NextV, E>`.
 	 */
 	map<NextV>(mapFn: (value: V) => NextV): Result<NextV, E>;
 
 	/**
 	 * Transforms the value into another Result if the result is Ok.
+     * It maps a `Result<V, E>` into `Result<NextV, E>`.
 	 */
 	flatMap<NextV>(mapFn: (value: V) => Result<NextV, E>): Result<NextV, E>;
 
 	/**
 	 * Transforms the error if the result is Fail.
+     * It maps a `Result<V, E>` into `Result<V, NextE>`.
 	 */
 	mapFails<NextE>(mapFn: (value: E) => NextE): Result<V, NextE>;
 
 	/**
-	 * Swaps the Ok value with the Fail value.
+	 * Swaps the Ok value with the Fail value, transforming a `Result<V, E>` into a `Result<E, V>`.
 	 */
 	flip(): Result<E, V>;
 
@@ -53,11 +56,21 @@ interface IResult<V, E> {
 	and<NextV>(result: Result<NextV, E>): Result<NextV, E>;
 
 	/**
+	 * Returns the return value of `fn` if this is Ok; otherwise, returns Fail.
+	 */
+	andThen<NextV>(fn: () => Result<NextV, E>): Result<NextV, E>;
+	
+    /**
 	 * Returns this result if it is Ok; otherwise, returns the provided result.
 	 */
 	or(result: Result<V, E>): Result<V, E>;
 
-	/**
+    /**
+	 * Returns this result if it is Ok; otherwise, returns the return value of the provided function.
+	 */
+	orElse(fn: () => Result<V, E>): Result<V, E>;
+	
+    /**
 	 * Returns the Ok value if successful, or the error value if it's a Fail.
 	 * This allows accessing the error values directly without type constraints.
 	 */
@@ -120,10 +133,20 @@ export class Ok<V = unknown, E = unknown> implements IResult<V, E> {
 		return result;
 	}
 
+	// ✅ Returns the return value of the provided function
+	public andThen<NextV>(fn: () => Result<NextV, E>): Result<NextV, E> {
+		return fn();
+	}
+
 	// ✅ Returns this result as it is Ok
 	public or(_: Result<V, E>): Result<V, E> {
 		return this;
 	}
+
+	// ✅ Returns this result as it is Ok
+	public orElse(_: () => Result<V, E>): Result<V, E> {
+		return this;
+    }
 
 	// ✅ Returns the Ok value
 	public unwrapOrGetErrors(): V {
@@ -185,12 +208,22 @@ export class Fail<V = unknown, E = unknown> implements IResult<V, E> {
 		return new Fail<NextV, E>(this.value);
 	}
 
+	// ✅ Always returns Fail
+	public andThen<NextV>(_: () => Result<NextV, E>): Result<NextV, E> {
+		return new Fail<NextV, E>(this.value);
+	
+    }
 	// ✅ Returns another Result if this is a Fail
 	public or(result: Result<V, E>): Result<V, E> {
 		return result;
 	}
 
-	// ✅ Returns the error value
+	// ✅ Returns the return value of the provided function if this is a Fail
+	public orElse(fn: () => Result<V, E>): Result<V, E> {
+		return fn();
+	}
+	
+    // ✅ Returns the error value
 	public unwrapOrGetErrors(): E {
 		return this.value;
 	}
