@@ -56,6 +56,12 @@ interface IResult<V, E> {
 	 * Returns this result if it is Ok; otherwise, returns the provided result.
 	 */
 	or(result: Result<V, E>): Result<V, E>;
+
+	/**
+	 * Returns the Ok value if successful, or the error value if it's a Fail.
+	 * This allows accessing the error values directly without type constraints.
+	 */
+	unwrapOrGetErrors(): V | E;
 }
 
 /**
@@ -118,6 +124,11 @@ export class Ok<V = unknown, E = unknown> implements IResult<V, E> {
 	public or(_: Result<V, E>): Result<V, E> {
 		return this;
 	}
+
+	// ✅ Returns the Ok value
+	public unwrapOrGetErrors(): V {
+		return this.value;
+	}
 }
 
 /**
@@ -177,6 +188,11 @@ export class Fail<V = unknown, E = unknown> implements IResult<V, E> {
 	// ✅ Returns another Result if this is a Fail
 	public or(result: Result<V, E>): Result<V, E> {
 		return result;
+	}
+
+	// ✅ Returns the error value
+	public unwrapOrGetErrors(): E {
+		return this.value;
 	}
 }
 
