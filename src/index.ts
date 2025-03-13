@@ -1,132 +1,177 @@
-export type Result<V, E> = Ok<V, E> | Fail<V, E>;
+export type Result<V = unknown, E = unknown> = Ok<V, E> | Fail<V, E>;
 
+/**
+ * Interface representing a result that can be either successful (Ok) or failed (Fail).
+ */
 interface IResult<V, E> {
 	readonly isOk: boolean;
 	readonly isFail: boolean;
-	readonly value: V | E;
 
+	/**
+	 * Transforms the value if the result is Ok.
+	 */
 	map<NextV>(mapFn: (value: V) => NextV): Result<NextV, E>;
+
+	/**
+	 * Transforms the value into another Result if the result is Ok.
+	 */
 	flatMap<NextV>(mapFn: (value: V) => Result<NextV, E>): Result<NextV, E>;
+
+	/**
+	 * Transforms the error if the result is Fail.
+	 */
 	mapFails<NextE>(mapFn: (value: E) => NextE): Result<V, NextE>;
+
+	/**
+	 * Swaps the Ok value with the Fail value.
+	 */
 	flip(): Result<E, V>;
 
+	/**
+	 * Extracts the Ok value or throws an error if it's a Fail.
+	 */
 	unwrap(): V;
+
+	/**
+	 * Returns the Ok value or the provided default value if it's a Fail.
+	 */
 	unwrapOr(defaultValue: V): V;
+
+	/**
+	 * Returns the Ok value or calls the provided function to generate a default value if it's a Fail.
+	 */
 	unwrapOrElse(fn: () => V): V;
+
+	/**
+	 * Extracts the Ok value or throws an error with a custom message if it's a Fail.
+	 */
 	expect(message: string): V;
 
+	/**
+	 * Returns the provided result if this is Ok; otherwise, returns Fail.
+	 */
 	and<NextV>(result: Result<NextV, E>): Result<NextV, E>;
+
+	/**
+	 * Returns this result if it is Ok; otherwise, returns the provided result.
+	 */
 	or(result: Result<V, E>): Result<V, E>;
 }
 
-export class Ok<V = never, E = never> implements IResult<V, E> {
+/**
+ * Represents a successful result.
+ */
+export class Ok<V = unknown, E = unknown> implements IResult<V, E> {
 	public readonly isOk = true as const;
 	public readonly isFail = false as const;
 
 	public constructor(public readonly value: V) {}
 
-	// ✅ Transforms the value if it is Ok
+	// ✅ Transforms the value if the result is Ok
 	public map<NextV>(mapFn: (value: V) => NextV): Result<NextV, E> {
 		return new Ok(mapFn(this.value));
 	}
 
-	// ✅ Chains computations if it is Ok
+	// ✅ Transforms the value into another Result if the result is Ok
 	public flatMap<NextV>(
 		mapFn: (value: V) => Result<NextV, E>,
 	): Result<NextV, E> {
 		return mapFn(this.value);
 	}
 
-	// ✅ Doesn't modify the value since it's already Ok
+	// ✅ Returns Ok without modifying the value
 	public mapFails<NextE>(_: (value: E) => NextE): Result<V, NextE> {
-		return new Ok(this.value);
+		return new Ok<V, NextE>(this.value);
 	}
 
 	// ✅ Converts Ok to Fail
 	public flip(): Result<E, V> {
-		return new Fail(this.value);
+		return new Fail<E, V>(this.value);
 	}
 
-	// ✅ Returns the inner value or throws if Fail
+	// ✅ Extracts the Ok value
 	public unwrap(): V {
 		return this.value;
 	}
 
-	// ✅ Returns the value or a default one
-	public unwrapOr(defaultValue: V): V {
+	// ✅ Extracts the Ok value, ignoring the default value
+	public unwrapOr(_defaultValue: V): V {
 		return this.value;
 	}
 
-	// ✅ Returns the value or executes a function to generate one
-	public unwrapOrElse(fn: () => V): V {
+	// ✅ Extracts the Ok value, ignoring the function
+	public unwrapOrElse(_fn: () => V): V {
 		return this.value;
 	}
 
-	// ✅ Returns the value or throws an error with a custom message
+	// ✅ Extracts the Ok value, ignoring the message
 	public expect(_: string): V {
 		return this.value;
 	}
 
-	// ✅ Returns another Result if Ok, otherwise keeps the Fail
+	// ✅ Returns the provided result
 	public and<NextV>(result: Result<NextV, E>): Result<NextV, E> {
 		return result;
 	}
 
-	// ✅ Keeps the current Ok, or returns another Result if Fail
+	// ✅ Returns this result as it is Ok
 	public or(_: Result<V, E>): Result<V, E> {
 		return this;
 	}
 }
 
-export class Fail<V = never, E = never> implements IResult<V, E> {
+/**
+ * Represents a failed result.
+ */
+export class Fail<V = unknown, E = unknown> implements IResult<V, E> {
 	public readonly isOk = false as const;
 	public readonly isFail = true as const;
 
 	public constructor(public readonly value: E) {}
 
-	// ✅ Doesn't modify the value since it's a Fail
+	// ✅ Always returns Fail
 	public map<NextV>(_: (value: V) => NextV): Result<NextV, E> {
-		return new Fail(this.value);
+		return new Fail<NextV, E>(this.value);
 	}
 
-	// ✅ Doesn't modify the value since it's a Fail
+	// ✅ Always returns Fail
 	public flatMap<NextV>(_: (value: V) => Result<NextV, E>): Result<NextV, E> {
-		return new Fail(this.value);
+		return new Fail<NextV, E>(this.value);
 	}
 
-	// ✅ Transforms the error if it is a Fail
+	// ✅ Transforms the error value if the result is Fail
 	public mapFails<NextE>(mapFn: (value: E) => NextE): Result<V, NextE> {
-		return new Fail(mapFn(this.value));
+		return new Fail<V, NextE>(mapFn(this.value));
 	}
 
 	// ✅ Converts Fail to Ok
 	public flip(): Result<E, V> {
-		return new Ok(this.value);
+		return new Ok<E, V>(this.value);
 	}
 
-	// ❌ Throws an error because Fail has no valid value
+	// ✅ Throws an error when trying to unwrap a Fail
 	public unwrap(): V {
 		throw new Error("Tried to unwrap a Fail result");
 	}
 
-	// ✅ Returns a default value instead of throwing
+	// ✅ Returns the provided default value
 	public unwrapOr(defaultValue: V): V {
 		return defaultValue;
 	}
 
-	// ✅ Returns a value generated by a function
+	// ✅ Calls the provided function to generate a default value
 	public unwrapOrElse(fn: () => V): V {
 		return fn();
 	}
 
-	// ❌ Throws an error with a custom message
+	// ✅ Throws an error with the provided message
 	public expect(message: string): V {
 		throw new Error(message);
 	}
 
 	// ✅ Always returns Fail
 	public and<NextV>(_: Result<NextV, E>): Result<NextV, E> {
-		return new Fail(this.value);
+		return new Fail<NextV, E>(this.value);
 	}
 
 	// ✅ Returns another Result if this is a Fail
@@ -135,25 +180,34 @@ export class Fail<V = never, E = never> implements IResult<V, E> {
 	}
 }
 
+/**
+ * Utility functions for working with results.
+ */
 export namespace ResultUtils {
-	type OkValues<T extends readonly Result<unknown, unknown>[]> = {
+	type OkValues<T extends readonly Result[]> = {
 		[K in keyof T]: T[K] extends Result<infer V, unknown> ? V : never;
 	};
-	type FailValues<T extends readonly Result<unknown, unknown>[]> =
-		T extends readonly Result<unknown, infer E>[] ? E[] : never;
 
-	// ✅ Combines multiple Results into one
-	export function combine<T extends readonly Result<unknown, unknown>[]>(
+	type FailValues<T extends readonly Result[]> = {
+		[K in keyof T]: T[K] extends Result<unknown, infer E> ? E : never;
+	}[number][];
+
+	/**
+	 * Combines multiple results into a single result.
+	 * If any result is Fail, returns a Fail containing all error values.
+	 * Otherwise, returns an Ok containing all success values.
+	 */
+	export function combine<T extends readonly Result[]>(
 		...results: T
 	): Result<OkValues<T>, FailValues<T>> {
-		const fails = results.filter((r): r is Fail<unknown, unknown> => r.isFail);
+		const fails = results.filter((r) => r instanceof Fail) as Fail[];
 
 		if (fails.length > 0) {
 			const failValues = fails.map((f) => f.value) as FailValues<T>;
 			return new Fail(failValues);
 		}
 
-		const okValues = results.map((r) => r.value) as OkValues<T>;
+		const okValues = results.map((r) => r.unwrapOr(null)) as OkValues<T>;
 		return new Ok(okValues);
 	}
 }
