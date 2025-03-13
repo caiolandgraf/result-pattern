@@ -4,47 +4,47 @@ import { StrongPassword } from "./validators/strong-password";
 
 export function ExampleUsage() {
 	// Example 1: Basic creation of results
-	const okResult = new Ok<number, string>(42);
-	const failResult = new Fail<number, string>("Something went wrong");
+	const okResult = new Ok(42);
+	const failResult = new Fail("Something went wrong");
 
-	console.log("Ok result:", okResult.isOk ? "Success" : "Fail", okResult.value);
+	console.log(
+		"Ok result:",
+		okResult.isOk ? "Success" : "Fail",
+		okResult.unwrapOr(0),
+	);
 	console.log(
 		"Fail result:",
 		failResult.isFail ? "Fail" : "Success",
-		failResult.value,
+		failResult.unwrapOr("Default Error"),
 	);
 
 	// Example 2: Password validation
 	const password = StrongPassword.try("123");
 	console.log("Is valid password?", password.isOk);
-	if (password.isFail) {
-		console.log("Errors:", password.value);
-	}
+	if (password.isFail) console.log("Errors:", password.value);
 
 	// Example 3: Combining results
-	const results = [
-		new Ok<number, string>(10),
-		new Fail<number, string>("user.not-found"),
-	];
+	const results = [new Ok(10), new Fail("user.not-found")];
 	const result2 = ResultUtils.combine(...results);
-	console.log("Combination:", result2.isOk ? "Success" : "Fail");
+	console.log(
+		"Combination:",
+		result2.isOk ? "Success" : "Fail",
+		result2.unwrapOr([]),
+	);
 
 	// Example 4: Using map to transform values
-	const nameResult = new Ok<string, string>("john doe");
-	const uppercaseName = nameResult.map((name) => name.toUpperCase());
-	console.log("Name in uppercase:", uppercaseName.value);
+	const uppercaseName = new Ok("john doe").map((name) => name.toUpperCase());
+	console.log("Name in uppercase:", uppercaseName.unwrapOr(""));
 
 	// Example 5: Using flatMap to chain operations
-	const validateAndFormat = (name: string): Result<string, string> => {
-		if (name.length < 3) return new Fail("Name is too short");
-		return new Ok(name.trim());
-	};
+	const validateAndFormat = (name: string): Result<string, string> =>
+		name.length < 3 ? new Fail("Name is too short") : new Ok(name.trim());
 
-	const nameProcessing = new Ok<string, string>("  John  ")
+	const nameProcessing = new Ok("  John  ")
 		.flatMap(validateAndFormat)
 		.map((name) => name.toUpperCase());
 
-	console.log("Processed name:", nameProcessing.value);
+	console.log("Processed name:", nameProcessing.unwrapOr("Invalid"));
 
 	// Example 6: Email and password validation
 	const email = Email.try("johndoe@example.com");
@@ -60,13 +60,14 @@ export function ExampleUsage() {
 	}
 
 	// Example 7: Using mapFail to transform errors
-	const errorResult = new Fail<number, string>("error.simple");
-	const detailedError = errorResult.mapFails((err) => `Detailed error: ${err}`);
-	console.log("Transformed error:", detailedError.value);
+	const detailedError = new Fail("error.simple").mapFails(
+		(err) => `Detailed error: ${err}`,
+	);
+	console.log("Transformed error:", detailedError.unwrapOr(""));
 
 	// Example 8: Using flip to invert Ok/Fail
-	const flippedOk = okResult.flip(); // Now is Fail
-	const flippedFail = failResult.flip(); // Now is Ok
+	const flippedOk = okResult.flip();
+	const flippedFail = failResult.flip();
 	console.log(
 		"Flipped results:",
 		flippedOk.isFail ? "Ok became Fail" : "Error",
@@ -77,70 +78,68 @@ export function ExampleUsage() {
 	function fetchUserData(
 		userId: number,
 	): Result<{ name: string; age: number }, string> {
-		if (userId === 1) {
-			return new Ok({ name: "Alice", age: 30 });
-		}
-		return new Fail("User not found");
+		return userId === 1
+			? new Ok({ name: "Alice", age: 30 })
+			: new Fail("User not found");
 	}
 
-	const userResponse = fetchUserData(1);
-	userResponse
+	fetchUserData(1)
 		.map((user) => console.log(`User found: ${user.name}, Age: ${user.age}`))
 		.mapFails((err) => console.error(`Error fetching user: ${err}`));
 
 	// Example 10: Form validation using Result
 	function validateForm(email: string, password: string) {
-		const emailResult = Email.try(email);
-		const passwordResult = StrongPassword.try(password);
-
-		const validation = ResultUtils.combine(emailResult, passwordResult);
-		return validation;
+		return ResultUtils.combine(Email.try(email), StrongPassword.try(password));
 	}
 
 	const formResult = validateForm("invalid-email", "WeakPass");
-	if (formResult.isFail) {
-		console.error("Form errors:", formResult.value);
-	} else {
-		console.log("Form is valid:", formResult.value);
-	}
+	console.log(
+		formResult.isFail
+			? `Form errors: ${formResult.value.join(", ")}`
+			: `Form is valid: ${formResult.value}`,
+	);
 
 	// Example 11: Using unwrapOrElse to provide fallback values
-	const serverResponse = new Fail<number, string>("Server is down");
-	const retryValue = serverResponse.unwrapOrElse(() => 500);
+	const retryValue = new Fail<number, string>("Server is down").unwrapOrElse(
+		() => 500,
+	);
 	console.log("Fallback value:", retryValue);
 
 	// Example 12: Complex transformation pipeline
-	const processUsername = (username: string): Result<string, string> => {
-		if (!username) return new Fail("Username is empty");
-		return new Ok(username.trim());
-	};
-
-	const sanitizedUsername = processUsername("  Caio  ")
-		.map((name) => name.toLowerCase())
+	const sanitizedUsername = new Ok("  Caio  ")
+		.map((name) => name.toLowerCase().trim())
 		.flatMap((name) =>
 			name.length > 2 ? new Ok(name) : new Fail("Too short"),
 		);
 
-	console.log("Sanitized username:", sanitizedUsername.value);
+	console.log(
+		"Sanitized username:",
+		sanitizedUsername.unwrapOr("Invalid username"),
+	);
 
 	// Example 13: Nested Result handling
 	function riskyOperation(): Result<Result<number, string>, string> {
 		return new Ok(new Ok(100));
 	}
 
-	const nestedResult = riskyOperation().flatMap((r) => r);
-	console.log("Flattened result:", nestedResult.unwrapOr(0));
+	console.log(
+		"Flattened result:",
+		riskyOperation().unwrapOr(new Fail("Operation failed")).unwrapOr(0),
+	);
 
 	// Example 14: Using and/or to combine results
-	const firstCheck = new Ok<boolean, string>(true);
-	const secondCheck = new Fail<boolean, string>("Check failed");
+	const firstCheck = new Ok<boolean, string>(true); // Ok<boolean, string>
+	const secondCheck = new Fail<boolean, string>("Check failed"); // Fail<boolean, string>
 
-	const finalCheck = firstCheck.and(secondCheck);
-	console.log("Final check result:", finalCheck.isOk ? "Passed" : "Failed");
+	// `and` combination
+	console.log(
+		"Final check result:",
+		firstCheck.and(secondCheck).isOk ? "Passed" : "Failed",
+	);
 
-	const alternativeCheck = firstCheck.or(secondCheck);
+	// `or` combination
 	console.log(
 		"Alternative check:",
-		alternativeCheck.isOk ? "Passed" : "Failed",
+		firstCheck.or(secondCheck).isOk ? "Passed" : "Failed",
 	);
 }
