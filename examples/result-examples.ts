@@ -54,11 +54,9 @@ export function ExampleUsage() {
 	const combined = ResultUtils.combine(email, password2);
 	if (combined.isOk) {
 		const [validEmail, validPassword] = combined.value;
-		console.log(
-			"Invalid data:",
-			validEmail.toString(),
-			validPassword.toString(),
-		);
+		console.log("Valid data:", validEmail.toString(), validPassword.toString());
+	} else {
+		console.log("Invalid data:", combined.value);
 	}
 
 	// Example 7: Using mapFail to transform errors
@@ -73,5 +71,76 @@ export function ExampleUsage() {
 		"Flipped results:",
 		flippedOk.isFail ? "Ok became Fail" : "Error",
 		flippedFail.isOk ? "Fail became Ok" : "Error",
+	);
+
+	// Example 9: Handling API responses with Result pattern
+	function fetchUserData(
+		userId: number,
+	): Result<{ name: string; age: number }, string> {
+		if (userId === 1) {
+			return new Ok({ name: "Alice", age: 30 });
+		}
+		return new Fail("User not found");
+	}
+
+	const userResponse = fetchUserData(1);
+	userResponse
+		.map((user) => console.log(`User found: ${user.name}, Age: ${user.age}`))
+		.mapFails((err) => console.error(`Error fetching user: ${err}`));
+
+	// Example 10: Form validation using Result
+	function validateForm(email: string, password: string) {
+		const emailResult = Email.try(email);
+		const passwordResult = StrongPassword.try(password);
+
+		const validation = ResultUtils.combine(emailResult, passwordResult);
+		return validation;
+	}
+
+	const formResult = validateForm("invalid-email", "WeakPass");
+	if (formResult.isFail) {
+		console.error("Form errors:", formResult.value);
+	} else {
+		console.log("Form is valid:", formResult.value);
+	}
+
+	// Example 11: Using unwrapOrElse to provide fallback values
+	const serverResponse = new Fail<number, string>("Server is down");
+	const retryValue = serverResponse.unwrapOrElse(() => 500);
+	console.log("Fallback value:", retryValue);
+
+	// Example 12: Complex transformation pipeline
+	const processUsername = (username: string): Result<string, string> => {
+		if (!username) return new Fail("Username is empty");
+		return new Ok(username.trim());
+	};
+
+	const sanitizedUsername = processUsername("  Caio  ")
+		.map((name) => name.toLowerCase())
+		.flatMap((name) =>
+			name.length > 2 ? new Ok(name) : new Fail("Too short"),
+		);
+
+	console.log("Sanitized username:", sanitizedUsername.value);
+
+	// Example 13: Nested Result handling
+	function riskyOperation(): Result<Result<number, string>, string> {
+		return new Ok(new Ok(100));
+	}
+
+	const nestedResult = riskyOperation().flatMap((r) => r);
+	console.log("Flattened result:", nestedResult.unwrapOr(0));
+
+	// Example 14: Using and/or to combine results
+	const firstCheck = new Ok<boolean, string>(true);
+	const secondCheck = new Fail<boolean, string>("Check failed");
+
+	const finalCheck = firstCheck.and(secondCheck);
+	console.log("Final check result:", finalCheck.isOk ? "Passed" : "Failed");
+
+	const alternativeCheck = firstCheck.or(secondCheck);
+	console.log(
+		"Alternative check:",
+		alternativeCheck.isOk ? "Passed" : "Failed",
 	);
 }
