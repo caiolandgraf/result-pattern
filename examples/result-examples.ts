@@ -56,7 +56,7 @@ export function ExampleUsage() {
 		const [validEmail, validPassword] = combined.value;
 		console.log("Valid data:", validEmail.toString(), validPassword.toString());
 	} else {
-		console.log("Invalid data:", combined.unwrapOrGetErrors());
+		console.log("Invalid data:", combined.valueOrError());
 	}
 
 	// Example 7: Using mapFail to transform errors
@@ -74,72 +74,124 @@ export function ExampleUsage() {
 		flippedFail.isOk ? "Fail became Ok" : "Error",
 	);
 
-	// Example 9: Handling API responses with Result pattern
-	function fetchUserData(
+	// Example 9: Using valueOrError for direct access to values or errors
+	const successResult = new Ok("Success data");
+	const errorResult = new Fail("Error message");
+
+	console.log("Success value:", successResult.valueOrError()); // "Success data"
+	console.log("Error value:", errorResult.valueOrError()); // "Error message"
+
+	// Example 10: Using match for elegant pattern matching
+	const userResult = new Ok({ name: "Alice", age: 30 });
+
+	const greeting = userResult.match({
+		ok: (user) => `Hello, ${user.name}! You are ${user.age} years old.`,
+		fail: (error) => `Could not greet user: ${error}`,
+	});
+
+	console.log("Greeting:", greeting); // "Hello, Alice! You are 30 years old."
+
+	// Example 11: Using andThen for operation chaining
+	function fetchUserProfile(
 		userId: number,
-	): Result<{ name: string; age: number }, string> {
-		return userId === 1
-			? new Ok({ name: "Alice", age: 30 })
-			: new Fail("User not found");
+	): Result<{ id: number; name: string }, string> {
+		return userId > 0
+			? new Ok({ id: userId, name: `User ${userId}` })
+			: new Fail("Invalid user ID");
 	}
 
-	fetchUserData(1)
-		.map((user) => console.log(`User found: ${user.name}, Age: ${user.age}`))
-		.mapFails((err) => console.error(`Error fetching user: ${err}`));
-
-	// Example 10: Form validation using Result
-	function validateForm(email: string, password: string) {
-		return ResultUtils.combine(Email.try(email), StrongPassword.try(password));
+	function fetchUserPreferences(user: { id: number; name: string }): Result<
+		{ theme: string },
+		string
+	> {
+		return new Ok({ theme: "dark" });
 	}
 
-	const formResult = validateForm("invalid-email", "WeakPass");
-	console.log(
-		formResult.isFail
-			? `Form errors: ${formResult.value.join(", ")}`
-			: `Form is valid: ${formResult.value}`,
+	const userWithPrefs = fetchUserProfile(123).andThen(() =>
+		fetchUserPreferences({ id: 123, name: "Alice" }),
 	);
 
-	// Example 11: Using unwrapOrElse to provide fallback values
-	const retryValue = new Fail<number, string>("Server is down").unwrapOrElse(
-		() => 500,
-	);
-	console.log("Fallback value:", retryValue);
+	console.log("User preferences:", userWithPrefs.valueOrError());
 
-	// Example 12: Complex transformation pipeline
-	const sanitizedUsername = new Ok("  Caio  ")
-		.map((name) => name.toLowerCase().trim())
-		.flatMap((name) =>
-			name.length > 2 ? new Ok(name) : new Fail("Too short"),
-		);
-
-	console.log(
-		"Sanitized username:",
-		sanitizedUsername.unwrapOr("Invalid username"),
-	);
-
-	// Example 13: Nested Result handling
-	function riskyOperation(): Result<Result<number, string>, string> {
-		return new Ok(new Ok(100));
+	// Example 12: Using orElse for fallback strategies
+	function getPrimaryUser(id: number): Result<{ name: string }, string> {
+		return new Fail("Primary database offline");
 	}
 
-	console.log(
-		"Flattened result:",
-		riskyOperation().unwrapOr(new Fail("Operation failed")).unwrapOr(0),
-	);
+	function getBackupUser(id: number): Result<{ name: string }, string> {
+		return new Ok({ name: "Backup User" });
+	}
 
-	// Example 14: Using and/or to combine results
-	const firstCheck = new Ok<boolean, string>(true); // Ok<boolean, string>
-	const secondCheck = new Fail<boolean, string>("Check failed"); // Fail<boolean, string>
+	const userData = getPrimaryUser(42).orElse(() => getBackupUser(42));
 
-	// `and` combination
-	console.log(
-		"Final check result:",
-		firstCheck.and(secondCheck).isOk ? "Passed" : "Failed",
-	);
+	console.log("User data from fallback:", userData.valueOrError());
 
-	// `or` combination
-	console.log(
-		"Alternative check:",
-		firstCheck.or(secondCheck).isOk ? "Passed" : "Failed",
+	// Example 13: Complex form validation with pattern matching
+	function validateRegistrationForm(email: string, password: string) {
+		const emailResult = Email.try(email);
+		const passwordResult = StrongPassword.try(password);
+
+		return ResultUtils.combine(emailResult, passwordResult).match({
+			ok: ([validEmail, validPassword]) => ({
+				success: true,
+				user: {
+					email: validEmail.toString(),
+					passwordStrength: "Strong",
+				},
+			}),
+			fail: (errors) => ({
+				success: false,
+				errors: errors,
+				user: {
+					email: "",
+					passwordStrength: "",
+				},
+			}),
+		});
+	}
+
+	const formValidation = validateRegistrationForm("invalid-email", "weak");
+	console.log("Form validation result:", formValidation);
+
+	// Example 14: Chaining multiple operations with andThen and match
+	function processUserRegistration(email: string, password: string) {
+		return Email.try(email)
+			.flatMap((validEmail) => {
+				// Check if email already exists
+				const emailExists = false; // Simulate database check
+				return emailExists
+					? new Fail<Email, string>("Email already registered")
+					: new Ok<Email, string>(validEmail);
+			})
+			.andThen(() =>
+				StrongPassword.try(password).mapFails((errors) => errors.join(", ")),
+			)
+			.andThen(() => {
+				// Create user in database (simulated)
+				return new Ok("user_123"); // Return user ID
+			})
+			.andThen(() => {
+				// Send welcome email (simulated)
+				const emailSent = true;
+				return emailSent
+					? new Ok("Welcome email sent")
+					: new Fail("Failed to send welcome email");
+			})
+			.match({
+				ok: (message) => ({
+					success: true,
+					message: `Registration successful: ${message}`,
+				}),
+				fail: (error) => ({
+					success: false,
+					message: `Registration failed: ${error}`,
+				}),
+			});
+	}
+
+	const registrationResult = processUserRegistration(
+		"valid@email.com",
+		"StrongPass123!",
 	);
+	console.log("Registration process result:", registrationResult);
 }
