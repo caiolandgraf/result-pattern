@@ -274,4 +274,34 @@ export namespace ResultUtils {
 		const okValues = results.map((r) => r.unwrapOr(null)) as OkValues<T>;
 		return new Ok(okValues);
 	}
+
+	/**
+	 * Wraps an asynchronous function that might throw an exception into a Promise<Result>.
+	 * If the function throws, returns a Fail containing the error.
+	 * Otherwise, returns an Ok containing the function's return value.
+	 */
+	export async function trySync<V, E = Error>(
+		fn: () => Promise<V>,
+	): Promise<Result<V, E>> {
+		try {
+			const value = await fn();
+			return new Ok<V, E>(value);
+		} catch (error) {
+			return new Fail<V, E>(error as E);
+		}
+	}
+
+	/**
+	 * Creates an Ok result with the given value.
+	 */
+	export function ok<V, E = unknown>(value: V): Result<V, E> {
+		return new Ok<V, E>(value);
+	}
+
+	/**
+	 * Creates a Fail result with the given error.
+	 */
+	export function fail<V = unknown, E = unknown>(error: E): Result<V, E> {
+		return new Fail<V, E>(error);
+	}
 }
